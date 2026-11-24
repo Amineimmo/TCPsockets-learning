@@ -90,17 +90,33 @@ int main(){
             int bytesreceived = recv(clientSocket, buffer, sizeof(buffer) - 1, 0);
             if( bytesreceived== SOCKET_ERROR){
                 std::cout << "recv() failed: " << WSAGetLastError() << std::endl;
-                break;
             } else {
                 std::cout << "DATA NOW on buffer array " << std::endl;
-                buffer[bytesreceived] = '\0';
-                break;
+                std::string body = "Hello from the Server!";
+                std::string httpResponse = 
+    "HTTP/1.1 200 OK\r\n"
+    "Content-Type: text/plain\r\n"
+    "Content-Length: " + std::to_string(body.length()) + "\r\n"
+    "Connection: close\r\n"
+    "Access-Control-Allow-Origin: *\r\n"
+    "\r\n" + body;
+
+                int bytesSent = send(clientSocket, httpResponse.c_str(), httpResponse.length(), 0);
+            
+            if (bytesSent == SOCKET_ERROR) {
+                std::cout << "send() failed: " << WSAGetLastError() << std::endl;
+            } else {
+                std::cout << "Message sent successfully (" << bytesSent << " bytes)" << std::endl;
             }
+
+            }
+             std::cout << "L browser galk : " << getMessageOnly(buffer,"\r\n\r\n") << std::endl;
         }
+        closesocket(clientSocket);
     }
-    std::cout << "L browser galk : " << getMessageOnly(buffer,"\r\n\r\n");
+   
     
-    closesocket(mySocket);
+    
     WSACleanup();
 return 0;
 }

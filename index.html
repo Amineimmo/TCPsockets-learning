@@ -3,21 +3,66 @@
   <body>
     <input id="box" placeholder="type something" />
     <button id="send">Send to cpp</button>
+    <button id="disc">Disconnect</button>
     <pre id="out"></pre>
 
     <script>
       const box = document.getElementById("box");
       const out = document.getElementById("out");
+      const disc = document.getElementById("disc");
+
+      // Keep track of the current connection so we can abort it
+      let currentController = null;
 
       document.getElementById("send").onclick = async () => {
-        const res = await fetch("http://127.0.0.1:54000/input", {
-          method: "POST",
-          headers: { "Content-Type": "text/plain" },
-          body: box.value,
-        });
-        const data = await res.json();
-        out.textContent = "cpp replied: " + JSON.stringify(data);
+        // If a previous request is running, cancel it first
+        if (currentController) {
+          currentController.abort();
+        }
+
+        // Create a new controller for this request
+        currentController = new AbortController();
+
+        try {
+          const res = await fetch("http://127.0.0.1:54000/input", {
+            method: "POST",
+            body: box.value,
+            signal: currentController.signal, // Attach the controller
+          });
+          const data = await res.text();
+          out.textContent += "cpp replied: " + data + "\n";
+        } catch (err) {
+          if (err.name === "AbortError") {
+            out.textContent += "[fetch aborted]\n";
+          } else {
+            out.textContent += "[fetch error: " + err.message + "]\n";
+          }
+        } finally {
+          currentController = null;
+        }
       };
+
+      // Wire up the Disconnect button
+      disc.onclick = () => {
+        if (currentController) {
+          currentController.abort();
+          out.textContent += "[manually disconnected]\n";
+        } else {
+          out.textContent += "[nothing to disconnect]\n";
+        }
+      };
+
+      async function getServerMessage() {
+        try {
+          const res = await fetch("http://127.0.0.1:54000/events");
+          const text = await res.text();
+          out.textContent += "Server says: " + text + "\n";
+        } catch (err) {
+          out.textContent += "[read error: " + err.message + "]\n";
+        }
+      }
+
+      getServerMessage();
     </script>
   </body>
 </html>
