@@ -1,0 +1,23 @@
+<!doctype html>
+<html>
+  <body>
+    <input id="box" placeholder="type something" />
+    <button id="send">Send to cpp</button>
+    <pre id="out"></pre>
+
+    <script>
+      const box = document.getElementById("box");
+      const out = document.getElementById("out");
+
+      document.getElementById("send").onclick = async () => {
+        const res = await fetch("http://127.0.0.1:54000/input", {
+          method: "POST",
+          headers: { "Content-Type": "text/plain" },
+          body: box.value,
+        });
+        const data = await res.json();
+        out.textContent = "cpp replied: " + JSON.stringify(data);
+      };
+    </script>
+  </body>
+</html>
